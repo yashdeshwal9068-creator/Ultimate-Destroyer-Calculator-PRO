@@ -2,225 +2,193 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AETHER-ULTIMA | Quantum Symbolic Engine</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AETHER-OMNI v6 | Ultimate Suite</title>
+    <!-- Math.js for Symbolic Logic -->
     <script src="https://cdnjs.cloudflare.com"></script>
     <link href="https://fonts.googleapis.com" rel="stylesheet">
     <style>
         :root {
-            --m-color: #00d2ff; --p-color: #bc13fe; --c-color: #39ff14;
-            --bg: #020406; --panel: rgba(15, 18, 25, 0.98);
+            --m-blue: #00d2ff; --p-purple: #bc13fe; --c-green: #39ff14;
+            --bg: #05070a; --glass: rgba(18, 22, 30, 0.98);
         }
 
         body {
-            background: var(--bg); color: #fff; font-family: 'JetBrains Mono', monospace;
+            background-color: var(--bg); color: #fff; font-family: 'JetBrains Mono', monospace;
             margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh;
-            background-image: radial-gradient(circle at 50% 50%, #0a1128 0%, #020406 100%);
+            overflow: hidden; touch-action: manipulation;
         }
 
-        .calc-container {
-            width: 900px; height: 650px; background: var(--panel);
-            border-radius: 25px; border: 1px solid rgba(255,255,255,0.1);
-            display: grid; grid-template-columns: 1fr 350px; gap: 20px; padding: 25px;
-            box-shadow: 0 0 100px rgba(0,0,0,0.9);
+        .calc-box {
+            width: 95%; max-width: 500px; background: var(--glass); padding: 25px;
+            border-radius: 35px; border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 0 80px rgba(0,0,0,0.9); backdrop-filter: blur(30px);
         }
 
-        /* Display System */
-        .display-system {
-            grid-column: span 2; background: #000; border-radius: 15px; padding: 20px;
-            border-left: 5px solid var(--m-color); position: relative;
+        /* Screen with No-Keyboard Input */
+        .screen {
+            background: #000; border-radius: 20px; padding: 20px; margin-bottom: 20px;
+            border-left: 4px solid var(--m-blue); box-shadow: inset 0 0 20px rgba(0,0,0,1);
         }
-        #history { font-size: 0.85rem; color: #444; margin-bottom: 5px; }
-        #main-input { font-family: 'Orbitron'; font-size: 2.2rem; color: var(--m-color); outline: none; border: none; background: transparent; width: 100%; text-align: right; }
-
-        /* Left Side: Controls */
-        .control-side { display: flex; flex-direction: column; gap: 15px; }
+        #hist { font-size: 0.75rem; color: #444; min-height: 18px; text-align: right; }
         
-        .mode-tabs { display: flex; gap: 5px; }
-        .tab { flex: 1; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: #666; cursor: pointer; border-radius: 8px; font-size: 0.7rem; transition: 0.3s; }
-        .tab.active { background: rgba(0,210,255,0.1); color: var(--m-color); border-color: var(--m-color); }
+        /* inputmode="none" is the secret to blocking the mobile keyboard */
+        #display {
+            width: 100%; border: none; background: transparent; color: var(--m-blue);
+            font-family: 'Orbitron'; font-size: 2.2rem; text-align: right; outline: none;
+            caret-color: var(--m-blue);
+        }
 
-        .btn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-        button { background: rgba(255,255,255,0.05); border: 1px solid #222; color: #ccc; padding: 15px 5px; border-radius: 10px; cursor: pointer; font-size: 0.8rem; transition: 0.2s; }
-        button:hover { background: rgba(255,255,255,0.1); color: #fff; transform: scale(1.02); border-color: #555; }
-        
-        .op { color: var(--m-color); font-weight: bold; }
-        .solve-btn { grid-column: span 2; background: var(--m-color); color: #000; font-weight: bold; font-family: 'Orbitron'; font-size: 1.2rem; }
-        .solve-btn:hover { background: #fff; box-shadow: 0 0 20px var(--m-color); }
+        /* Mode Switcher */
+        .mode-bar { display: flex; gap: 8px; margin-bottom: 20px; }
+        .m-tab {
+            flex: 1; padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid #222;
+            border-radius: 12px; cursor: pointer; font-size: 0.7rem; font-weight: bold;
+            transition: 0.3s; text-align: center; color: #666;
+        }
+        .m-tab.active { background: rgba(0,210,255,0.1); color: var(--m-blue); border-color: var(--m-blue); }
 
-        /* Right Side: Visuals */
-        .visual-side { display: flex; flex-direction: column; gap: 15px; border-left: 1px solid #222; padding-left: 20px; }
-        .graph-area { flex-grow: 1; background: #000; border-radius: 15px; border: 1px solid #111; overflow: hidden; position: relative; }
-        canvas { width: 100%; height: 100%; }
-        
-        .neural-log { height: 120px; background: rgba(0,255,100,0.03); border: 1px solid rgba(0,255,100,0.1); padding: 10px; font-size: 0.65rem; color: var(--c-color); overflow-y: auto; border-radius: 10px; }
-
+        /* Grids */
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
         .hidden { display: none; }
+
+        button {
+            background: rgba(255,255,255,0.05); border: 1px solid #222;
+            color: #ddd; padding: 18px 5px; border-radius: 14px; cursor: pointer;
+            font-size: 0.9rem; transition: 0.15s; user-select: none;
+        }
+        button:active { transform: scale(0.92); background: rgba(255,255,255,0.2); }
+
+        .op { color: var(--m-blue); font-weight: bold; }
+        .del { color: #ff4444; font-weight: bold; }
+        .exe { grid-column: span 2; background: linear-gradient(90deg, var(--m-blue), var(--p-purple)); color: #fff; font-weight: bold; font-family: 'Orbitron'; }
     </style>
 </head>
 <body>
 
-<div class="calc-container">
-    <!-- DISPLAY -->
-    <div class="display-system">
-        <div id="history">AWAITING INPUT...</div>
-        <input type="text" id="main-input" value="0" spellcheck="false">
+<div class="calc-box">
+    <div class="screen">
+        <div id="hist">AWAITING_COMMAND</div>
+        <!-- inputmode="none" stops the phone keyboard -->
+        <input type="text" id="display" value="0" inputmode="none" readonly>
     </div>
 
-    <!-- LEFT: CALCULATION CORE -->
-    <div class="control-side">
-        <div class="mode-tabs">
-            <div class="tab active" id="m-tab" onclick="setMode('math')">MATHEMATICS</div>
-            <div class="tab" id="p-tab" onclick="setMode('phys')">PHYSICS</div>
-            <div class="tab" id="c-tab" onclick="setMode('chem')">CHEMISTRY</div>
-        </div>
-
-        <!-- MATH GRID (WITH CALCULUS) -->
-        <div id="math-grid" class="mode-content">
-            <div class="btn-grid">
-                <button class="op" onclick="ins('derivative(\'', '\', \'x\')')">d/dx</button>
-                <button class="op" onclick="ins('simplify(\'', '\')')">SIMP</button>
-                <button class="op" onclick="ins('det([', '])')">|M|</button>
-                <button style="color:#ff4444" onclick="clr()">AC</button>
-                
-                <button onclick="ins('sin(')">sin</button>
-                <button onclick="ins('cos(')">cos</button>
-                <button onclick="ins('tan(')">tan</button>
-                <button class="op" onclick="ins('/')">/</button>
-
-                <button onclick="ins('7')">7</button><button onclick="ins('8')">8</button><button onclick="ins('9')">9</button>
-                <button class="op" onclick="ins('*')">×</button>
-
-                <button onclick="ins('4')">4</button><button onclick="ins('5')">5</button><button onclick="ins('6')">6</button>
-                <button class="op" onclick="ins('-')">-</button>
-
-                <button onclick="ins('1')">1</button><button onclick="ins('2')">2</button><button onclick="ins('3')">3</button>
-                <button class="op" onclick="ins('+')">+</button>
-
-                <button onclick="ins('0')">0</button><button onclick="ins('.')">.</button>
-                <button class="solve-btn" onclick="execute()">=</button>
-            </div>
-        </div>
-
-        <!-- PHYSICS GRID -->
-        <div id="phys-grid" class="mode-content hidden">
-            <div class="btn-grid">
-                <button onclick="ins('299792458')">c</button>
-                <button onclick="ins('6.626e-34')">h</button>
-                <button onclick="ins('9.81')">g</button>
-                <button onclick="ins('6.67e-11')">G</button>
-                <button class="op" onclick="ins('^2')">x²</button>
-                <button class="op" onclick="ins('^')">xⁿ</button>
-                <button class="op" onclick="ins('sqrt(')">√</button>
-                <button class="op" onclick="ins('log(')">log</button>
-                <button class="solve-btn" onclick="execute()" style="background:var(--p-color)">=</button>
-                <button class="solve-btn" onclick="draw()" style="background:#fff">PLOT</button>
-            </div>
-        </div>
-
-        <!-- CHEMISTRY GRID -->
-        <div id="chem-grid" class="mode-content hidden">
-            <div class="btn-grid">
-                <button onclick="ins('6.022e23')">N<sub>A</sub></button>
-                <button onclick="ins('8.314')">R</button>
-                <button onclick="ins('1.008')">H</button>
-                <button onclick="ins('12.01')">C</button>
-                <button onclick="ins('14.01')">N</button>
-                <button onclick="ins('16.00')">O</button>
-                <button onclick="ins('22.99')">Na</button>
-                <button onclick="ins('35.45')">Cl</button>
-                <button class="solve-btn" onclick="execute()" style="background:var(--c-color)">=</button>
-                <button onclick="ins('(')">(</button><button onclick="ins(')')">)</button>
-            </div>
-        </div>
+    <div class="mode-bar">
+        <div id="t-math" class="m-tab active" onclick="setM('math')">MATH</div>
+        <div id="t-phys" class="m-tab" onclick="setM('phys')">PHYSICS</div>
+        <div id="t-chem" class="m-tab" onclick="setM('chem')">CHEMISTRY</div>
     </div>
 
-    <!-- RIGHT: VISUALIZER -->
-    <div class="visual-side">
-        <div class="graph-area">
-            <canvas id="canvas"></canvas>
-            <div style="position:absolute; top:10px; left:10px; font-size:0.6rem; color:#444;">V-SPACE GRAPH</div>
-        </div>
-        <div class="neural-log" id="log">
-            > AETHER OS v5.0 Loaded...<br>> Symbolic Math Engine Ready.
-        </div>
+    <!-- MAIN GRID (MATH + CALCULUS) -->
+    <div id="g-math" class="grid">
+        <button class="del" onclick="reset()">AC</button>
+        <button class="del" onclick="back()">⌫</button>
+        <button class="op" onclick="ins('derivative(\'', '\', \'x\')')">d/dx</button>
+        <button class="op" onclick="ins('/')">/</button>
+
+        <button onclick="ins('7')">7</button><button onclick="ins('8')">8</button><button onclick="ins('9')">9</button>
+        <button class="op" onclick="ins('*')">×</button>
+
+        <button onclick="ins('4')">4</button><button onclick="ins('5')">5</button><button onclick="ins('6')">6</button>
+        <button class="op" onclick="ins('-')">-</button>
+
+        <button onclick="ins('1')">1</button><button onclick="ins('2')">2</button><button onclick="ins('3')">3</button>
+        <button class="op" onclick="ins('+')">+</button>
+
+        <button onclick="ins('0')">0</button><button onclick="ins('.')">.</button>
+        <button class="exe" onclick="solve()">=</button>
+    </div>
+
+    <!-- PHYSICS GRID (INTEGRATION + CONSTANTS) -->
+    <div id="g-phys" class="grid hidden">
+        <!-- integration syntax: integrate('func', 'var', start, end) -->
+        <button class="op" onclick="ins('integrate(\'', '\', x, 0, 1)')">∫dx</button>
+        <button class="op" onclick="ins('simplify(\'', '\')')">SIMP</button>
+        <button onclick="ins('299792458')">c</button>
+        <button onclick="ins('9.81')">g</button>
+
+        <button onclick="ins('sin(')">sin</button><button onclick="ins('cos(')">cos</button><button onclick="ins('tan(')">tan</button>
+        <button class="op" onclick="ins('sqrt(')">√</button>
+
+        <button onclick="ins('pi')">π</button><button onclick="ins('e')">e</button>
+        <button class="exe" onclick="solve()" style="background:var(--p-purple)">=</button>
+    </div>
+
+    <!-- CHEMISTRY GRID -->
+    <div id="g-chem" class="grid hidden">
+        <button onclick="ins('6.022e23')">N<sub>A</sub></button>
+        <button onclick="ins('8.314')">R</button>
+        <button onclick="ins('(')">(</button><button onclick="ins(')')">)</button>
+        
+        <button onclick="ins('1.008')">H</button><button onclick="ins('12.01')">C</button>
+        <button onclick="ins('14.01')">N</button><button onclick="ins('16.00')">O</button>
+
+        <button onclick="ins('22.99')">Na</button><button onclick="ins('35.45')">Cl</button>
+        <button class="exe" onclick="solve()" style="background:var(--c-green); color:#000;">=</button>
     </div>
 </div>
 
 <script>
-    const input = document.getElementById('main-input');
-    const hist = document.getElementById('history');
-    const log = document.getElementById('log');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
+    const display = document.getElementById('display');
+    const history = document.getElementById('hist');
 
-    // Advanced Insert: Handles complex functions like derivative('', 'x')
+    // 1. One-Click One-Digit Remove (Backspace)
+    function back() {
+        if (display.value.length > 1) {
+            display.value = display.value.slice(0, -1);
+        } else {
+            display.value = "0";
+        }
+    }
+
+    function reset() {
+        display.value = "0";
+        history.innerText = "MEM_PURGED";
+    }
+
+    // 2. Intelligent Insertion
     function ins(pre, post = "") {
-        const start = input.selectionStart;
-        const end = input.selectionEnd;
-        const text = input.value;
-        input.value = text.slice(0, start) + pre + post + text.slice(end);
-        input.focus();
-        // Move cursor between the quotes/brackets
-        input.setSelectionRange(start + pre.length, start + pre.length);
+        if (display.value === "0") display.value = "";
+        display.value += pre + post;
     }
 
-    function clr() { input.value = "0"; hist.innerText = ""; }
-
-    function setMode(mode) {
-        document.querySelectorAll('.mode-content').forEach(el => el.classList.add('hidden'));
-        document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-        document.getElementById(mode + '-grid').classList.remove('hidden');
-        document.getElementById(mode[0] + '-tab').classList.add('active');
+    // 3. Mode Switcher Logic
+    function setM(mode) {
+        document.querySelectorAll('.grid').forEach(g => g.classList.add('hidden'));
+        document.querySelectorAll('.m-tab').forEach(t => t.classList.remove('active'));
         
-        const color = mode === 'math' ? 'var(--m-color)' : mode === 'phys' ? 'var(--p-color)' : 'var(--c-color)';
-        document.querySelector('.display-system').style.borderColor = color;
-        input.style.color = color;
+        document.getElementById('g-' + mode).classList.remove('hidden');
+        document.getElementById('t-' + mode).classList.add('active');
+        
+        let color = mode === 'math' ? 'var(--m-blue)' : mode === 'phys' ? 'var(--p-purple)' : 'var(--c-green)';
+        display.style.color = color;
+        document.querySelector('.screen').style.borderColor = color;
     }
 
-    function execute() {
+    // 4. Symbolic & Advanced Calculation Engine
+    function solve() {
         try {
-            let val = input.value;
-            // Process Symbolic Math
-            let result = math.evaluate(val);
+            let expr = display.value;
+            let result = math.evaluate(expr);
             
-            // Format if it's a symbolic derivative object
-            if(result && result.isNode) result = result.toString();
+            // Format result
+            if (typeof result === 'number') result = +result.toFixed(8);
+            if (result && result.isNode) result = result.toString(); // For symbolic d/dx
             
-            hist.innerText = val + " =";
-            input.value = result;
-            log.innerHTML += `<br>> Result: ${result}`;
+            history.innerText = expr + " =";
+            display.value = result;
         } catch (e) {
-            log.innerHTML += `<br>> [!] ERROR: ${e.message}`;
+            display.value = "SYNTAX_ERR";
+            console.error(e);
         }
     }
 
-    function draw() {
-        canvas.width = canvas.offsetWidth;
-        canvas.height = canvas.offsetHeight;
-        ctx.clearRect(0,0,canvas.width, canvas.height);
-        
-        // Draw Axis
-        ctx.strokeStyle = '#222';
-        ctx.beginPath();
-        ctx.moveTo(canvas.width/2, 0); ctx.lineTo(canvas.width/2, canvas.height);
-        ctx.moveTo(0, canvas.height/2); ctx.lineTo(canvas.width, canvas.height/2);
-        ctx.stroke();
-
-        // Plot
-        ctx.strokeStyle = 'cyan';
-        ctx.beginPath();
-        for(let x = -20; x <= 20; x += 0.1) {
-            try {
-                let y = math.evaluate(input.value, {x: x});
-                let px = canvas.width/2 + (x * 10);
-                let py = canvas.height/2 - (y * 10);
-                if(x === -20) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-            } catch(e) {}
+    // Prevent double-tap zoom which causes lag
+    document.addEventListener('touchstart', function (event) {
+        if (event.touches.length > 1) {
+            event.preventDefault();
         }
-        ctx.stroke();
-        log.innerHTML += "<br>> Function Vector Rendered.";
-    }
+    }, { passive: false });
 </script>
 
 </body>
