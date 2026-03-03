@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AETHER-OMNI | Quantum Intelligence System</title>
+    <script src="https://cdnjs.cloudflare.com"></script>
+    <link href="https://fonts.googleapis.com" rel="stylesheet">
+    <style>
+        :root {
+            --m-blue: #00d2ff; --p-purple: #9d50bb; --c-green: #39ff14;
+            --danger: #ff3131; --glass: rgba(15, 20, 30, 0.9); --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background: #020408; color: #fff; font-family: 'JetBrains Mono', monospace;
+            margin: 0; display: flex; height: 100vh; overflow: hidden;
+            background-image: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #020408 100%);
+        }
+
+        .master-grid {
+            display: grid; grid-template-columns: 350px 1fr 350px;
+            width: 100%; gap: 15px; padding: 20px; box-sizing: border-box;
+        }
+
+        .panel {
+            background: var(--glass); border: 1px solid var(--border);
+            border-radius: 20px; display: flex; flex-direction: column; padding: 20px;
+            backdrop-filter: blur(25px); box-shadow: 0 15px 40px rgba(0,0,0,0.7);
+        }
+
+        /* Displays */
+        .screen-container {
+            background: #000; border-radius: 15px; padding: 20px;
+            border-bottom: 2px solid var(--m-blue); margin-bottom: 20px;
+        }
+        #hist { font-size: 0.75rem; color: #444; height: 20px; text-align: right; }
+        #out { font-family: 'Orbitron'; font-size: 2.5rem; text-align: right; color: var(--m-blue); text-shadow: 0 0 15px rgba(0,210,255,0.4); }
+
+        /* Grids & Buttons */
+        h2 { font-family: 'Orbitron'; font-size: 0.75rem; letter-spacing: 3px; margin: 15px 0 10px; color: #666; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        
+        button {
+            background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+            color: #999; padding: 12px 2px; border-radius: 8px; cursor: pointer;
+            font-size: 0.75rem; transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        button:hover { background: rgba(255,255,255,0.1); color: #fff; transform: translateY(-2px); border-color: #fff; }
+        
+        .m-btn:hover { border-color: var(--m-blue); box-shadow: 0 0 10px var(--m-blue); }
+        .p-btn:hover { border-color: var(--p-purple); box-shadow: 0 0 10px var(--p-purple); }
+        .c-btn:hover { border-color: var(--c-green); box-shadow: 0 0 10px var(--c-green); }
+        
+        .special { background: rgba(255,255,255,0.07); font-weight: bold; color: #eee; }
+        .exe { grid-column: span 2; background: linear-gradient(90deg, var(--m-blue), var(--p-purple)); color: #fff; border: none; }
+
+        /* Visual Elements */
+        #v-log { font-size: 0.65rem; color: var(--c-green); height: 100px; overflow-y: auto; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 10px; margin-top: auto; }
+        .canvas-wrap { flex-grow: 1; background: #000; border-radius: 10px; position: relative; margin-top: 15px; border: 1px solid #111; }
+        canvas { width: 100%; height: 100%; }
+
+        /* Unit Converter */
+        .converter { display: flex; gap: 5px; margin-top: 10px; }
+        select { background: #111; color: #fff; border: 1px solid #333; font-size: 0.7rem; padding: 5px; border-radius: 4px; flex: 1; }
+
+        .back { color: var(--danger); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="master-grid">
+    <!-- LEFT: MATH CORE -->
+    <div class="panel">
+        <h2 style="color: var(--m-blue);">MATHEMATICS ENGINE</h2>
+        <div class="grid">
+            <button class="m-btn special" onclick="ins('derivative(')">d/dx</button>
+            <button class="m-btn special" onclick="ins('integrate(')">∫dx</button>
+            <button class="m-btn" onclick="ins('det(')">det</button>
+            <button class="m-btn" onclick="ins('inv(')">inv</button>
+            <button class="m-btn" onclick="ins('sin(')">sin</button>
+            <button class="m-btn" onclick="ins('cos(')">cos</button>
+            <button class="m-btn" onclick="ins('tan(')">tan</button>
+            <button class="m-btn" onclick="ins('sqrt(')">√</button>
+            <button class="m-btn" onclick="ins('log(')">log</button>
+            <button class="m-btn" onclick="ins('ln(')">ln</button>
+            <button class="m-btn" onclick="ins('abs(')">abs</button>
+            <button class="m-btn" onclick="ins('!')">n!</button>
+        </div>
+        <h2>FORMULA PRESETS</h2>
+        <div class="grid">
+            <button onclick="lib('(-b + sqrt(b^2 - 4*a*c)) / (2*a)')">Quadrat</button>
+            <button onclick="lib('a^2 + b^2')">Pythag</button>
+            <button onclick="lib('4/3 * pi * r^3')">Sphere</button>
+            <button onclick="lib('m * (y2-y1)/(x2-x1)')">Slope</button>
+        </div>
+        <div class="canvas-wrap">
+            <canvas id="gCanvas"></canvas>
+            <div style="position:absolute; bottom:5px; left:5px; font-size:0.5rem; color:#333;">FUNCTION_RENDERER_V4</div>
+        </div>
+    </div>
+
+    <!-- CENTER: SYSTEM CORE -->
+    <div class="panel" style="border-top: 3px solid var(--m-blue);">
+        <div class="screen-container">
+            <div id="hist">SYSTEM READY</div>
+            <div id="out">0</div>
+        </div>
+        <div class="grid" style="grid-template-columns: repeat(5, 1fr); gap: 10px;">
+            <button onclick="ins('7')">7</button><button onclick="ins('8')">8</button><button onclick="ins('9')">9</button><button class="back" onclick="back()">⌫</button><button class="back" onclick="reset()">AC</button>
+            <button onclick="ins('4')">4</button><button onclick="ins('5')">5</button><button onclick="ins('6')">6</button><button onclick="ins('*')">×</button><button onclick="ins('/')">÷</button>
+            <button onclick="ins('1')">1</button><button onclick="ins('2')">2</button><button onclick="ins('3')">3</button><button onclick="ins('+')">+</button><button onclick="ins('-')">-</button>
+            <button onclick="ins('0')">0</button><button onclick="ins('.')">.</button><button onclick="ins('pi')">π</button><button onclick="ins('^')">^</button><button onclick="speak()">🔊</button>
+            <button class="exe" onclick="calc()">COMPUTE EXE</button>
+            <button class="exe" style="background:var(--p-purple)" onclick="plot()">PLOT VECTOR</button>
+            <button onclick="ins('(')">(</button>
+        </div>
+
+        <h2>CONVERSION UTILITY</h2>
+        <div class="converter">
+            <select id="uFrom"><option value="km">KM</option><option value="mile">Mile</option><option value="degC">°C</option><option value="degF">°F</option></select>
+            <span style="align-self:center">→</span>
+            <select id="uTo"><option value="m">Meters</option><option value="km">KM</option><option value="degF">°F</option><option value="kelvin">Kelvin</option></select>
+            <button onclick="convert()">GO</button>
+        </div>
+
+        <div id="v-log">> SYSTEM_CORE: ONLINE<br>> NEURAL_LINK: ACTIVE</div>
+    </div>
+
+    <!-- RIGHT: PHYS & CHEM -->
+    <div class="panel">
+        <h2 style="color: var(--p-purple);">PHYSICS DATA</h2>
+        <div class="grid">
+            <button class="p-btn" onclick="ins('299792458')">c</button>
+            <button class="p-btn" onclick="ins('6.626e-34')">h</button>
+            <button class="p-btn" onclick="ins('9.8066')">g</button>
+            <button class="p-btn" onclick="ins('6.674e-11')">G</button>
+            <button class="p-btn special" onclick="lib('m * c^2')">E=mc²</button>
+            <button class="p-btn special" onclick="lib('1/2 * m * v^2')">E_kin</button>
+            <button class="p-btn special" onclick="lib('G * m1 * m2 / r^2')">F_grav</button>
+            <button class="p-btn special" onclick="lib('P * V = n * R * T')">PV=nRT</button>
+        </div>
+        <h2 style="color: var(--c-green);">CHEMISTRY DATA</h2>
+        <div class="grid">
+            <button class="c-btn" onclick="ins('6.022e23')">N<sub>A</sub></button>
+            <button class="c-btn" onclick="ins('8.314')">R</button>
+            <button class="c-btn" onclick="ins('-log10(')">pH</button>
+            <button class="c-btn" onclick="ins('1.38e-23')">k<sub>B</sub></button>
+        </div>
+        <h2>PERIODIC TABLE SYMBOLS (MASS)</h2>
+        <div class="grid" style="grid-template-columns: repeat(6, 1fr);">
+            <button onclick="ins('1.008')">H</button><button onclick="ins('4.002')">He</button><button onclick="ins('12.01')">C</button>
+            <button onclick="ins('14.01')">N</button><button onclick="ins('16.00')">O</button><button onclick="ins('35.45')">Cl</button>
+            <button onclick="ins('22.99')">Na</button><button onclick="ins('39.10')">K</button><button onclick="ins('55.84')">Fe</button>
+            <button onclick="ins('63.54')">Cu</button><button onclick="ins('196.9')">Au</button><button onclick="ins('207.2')">Pb</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const out = document.getElementById('out');
+    const hist = document.getElementById('hist');
+    const log = document.getElementById('v-log');
+    const canvas = document.getElementById('gCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function ins(s) { if(out.innerText === '0') out.innerText = ''; out.innerText += s; }
+    function back() { out.innerText = out.innerText.slice(0, -1) || '0'; }
+    function reset() { out.innerText = '0'; hist.innerText = 'MEM_RESET'; log.innerHTML = '> Memory Cleared'; }
+    function lib(f) { out.innerText = f; hist.innerText = 'Template Loaded'; }
+
+    function calc() {
+        try {
+            let res = math.evaluate(out.innerText);
+            if(typeof res === 'number') res = +res.toFixed(8);
+            hist.innerText = out.innerText + ' =';
+            out.innerText = res;
+            log.innerHTML += `<br>> Computed: ${res}`;
+        } catch(e) { out.innerText = "SIG_ERR"; log.innerHTML += `<br>> ERR: ${e.message}`; }
+    }
+
+    function plot() {
+        canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
+        ctx.clearRect(0,0,canvas.width, canvas.height);
+        ctx.strokeStyle = '#222'; ctx.beginPath();
+        ctx.moveTo(canvas.width/2,0); ctx.lineTo(canvas.width/2, canvas.height);
+        ctx.moveTo(0, canvas.height/2); ctx.lineTo(canvas.width, canvas.height/2); ctx.stroke();
+        
+        ctx.strokeStyle = '#00d2ff'; ctx.beginPath();
+        for(let x = -15; x <= 15; x += 0.1) {
+            try {
+                let y = math.evaluate(out.innerText, {x: x});
+                let px = canvas.width/2 + (x * 10);
+                let py = canvas.height/2 - (y * 10);
+                if(x === -15) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            } catch(e) {}
+        }
+        ctx.stroke();
+        log.innerHTML += "<br>> Plotting Vector...";
+    }
+
+    function convert() {
+        try {
+            const val = parseFloat(out.innerText);
+            const from = document.getElementById('uFrom').value;
+            const to = document.getElementById('uTo').value;
+            const res = math.unit(val, from).toNumber(to);
+            out.innerText = res.toFixed(4);
+            log.innerHTML += `<br>> Converted ${val}${from} to ${to}`;
+        } catch(e) { log.innerHTML += "<br>> Conv Error"; }
+    }
+
+    function speak() {
+        const synth = window.speechSynthesis;
+        synth.speak(new SpeechSynthesisUtterance("Result is " + out.innerText));
+    }
+</script>
+</body>
+</html>
